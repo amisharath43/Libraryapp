@@ -1,0 +1,16 @@
+.vs/
+.bin/
+*.js
+*.css
+*.css.*
+*.js.*
+*.cshtml
+*.gz
+*.cache
+*.dll
+*.json
+*.txt
+*.pdb
+*.exe
+*.user
+*.bin
