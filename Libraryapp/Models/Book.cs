@@ -1,7 +1,10 @@
-﻿namespace Libraryapp.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Libraryapp.Models
 {
     public class Book
     {
+        [Key]
         public int BookId { get; set; }
         public string Title { get; set; }
         public string Publisher { get; set; }

@@ -3,60 +3,74 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Libraryapp.Controllers
 {
-    public class BorrowControllers
+    [ApiController]
+    [Route("api/[controller]")]
+    public class BorrowController : ControllerBase
     {
-        [ApiController]
-        [Route("api/[controller]")]
-        public class BorrowController : ControllerBase
+        private readonly LibraryContext _context;
+
+        public BorrowController(LibraryContext context)
         {
-            private readonly LibraryContext _context;
+            _context = context;
+        }
 
-            public BorrowController(LibraryContext context)
+        [HttpGet]
+        public IActionResult GetBorrowRecords()
+        {
+            var records = _context.BorrowRecords.ToList();
+            return Ok(records);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetBorrowRecord(int id)
+        {
+            var record = _context.BorrowRecords.Find(id);
+            if (record == null)
+                return NotFound("Borrow record not found");
+            return Ok(record);
+        }
+
+        [HttpPost("borrow")]
+        public IActionResult BorrowBook(int studentId, int bookId)
+        {
+            var book = _context.Books.Find(bookId);
+
+            if (book == null || !book.IsAvailable)
+                return BadRequest("Book not available");
+
+            var record = new BorrowRecord
             {
-                _context = context;
-            }
+                StudentId = studentId,
+                BookId = bookId,
+                BorrowDate = DateTime.Now
+            };
 
-            [HttpPost("borrow")]
-            public IActionResult BorrowBook(int studentId, int bookId)
-            {
-                var book = _context.Books.Find(bookId);
+            book.IsAvailable = false;
 
-                if (book == null || !book.IsAvailable)
-                    return BadRequest("Book not available");
+            _context.BorrowRecords.Add(record);
+            _context.SaveChanges();
 
-                var record = new BorrowRecord
-                {
-                    StudentId = studentId,
-                    BookId = bookId
-                };
+            return Ok(new { message = "Book borrowed successfully", record });
+        }
 
-                book.IsAvailable = false;
+        [HttpPost("return")]
+        public IActionResult ReturnBook(int bookId)
+        {
+            var record = _context.BorrowRecords
+                .FirstOrDefault(x => x.BookId == bookId && x.ReturnDate == null);
 
-                _context.BorrowRecords.Add(record);
-                _context.SaveChanges();
+            if (record == null)
+                return BadRequest("No active borrow record");
 
-                return Ok("Book borrowed");
-            }
+            record.ReturnDate = DateTime.Now;
 
-            [HttpPost("return")]
-            public IActionResult ReturnBook(int bookId)
-            {
-                var record = _context.BorrowRecords
-                    .FirstOrDefault(x => x.BookId == bookId && x.ReturnDate == null);
-
-                if (record == null)
-                    return BadRequest("No active borrow record");
-
-                record.ReturnDate = DateTime.Now;
-
-                var book = _context.Books.Find(bookId);
+            var book = _context.Books.Find(bookId);
+            if (book != null)
                 book.IsAvailable = true;
 
-                _context.SaveChanges();
+            _context.SaveChanges();
 
-                return Ok("Book returned");
-            }
-
+            return Ok(new { message = "Book returned successfully", record });
         }
     }
 }

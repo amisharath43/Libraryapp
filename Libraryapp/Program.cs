@@ -17,6 +17,8 @@ namespace Libraryapp
             builder.Services.AddDbContext<LibraryContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddAuthentication();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline. 
@@ -36,13 +38,13 @@ namespace Libraryapp
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapStaticAssets();
-            //app.MapControllerRoute( 
-            // name: "default", 
-            // pattern: "{controller=Home}/{action=Index}/{id?}") 
-            //.WithStaticAssets(); 
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.MapControllers();
 
